@@ -3,6 +3,7 @@
 namespace ReportPortalBasic\Service;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
@@ -146,16 +147,18 @@ class ReportPortalHTTPService
 
     function __construct()
     {
-        self::$client = new Client([
-            'base_uri' => self::$baseURI,
-            'http_errors' => false,
-            'verify' => false,
-            'headers' => [
-                'Authorization' => 'bearer ' . self::$UUID
+        self::$client = new Client(
+            [
+                'base_uri'    => self::$baseURI,
+                'http_errors' => false,
+                'verify'      => false,
+                'headers'     => [
+                    'Authorization' => 'bearer ' . self::$UUID
+                ]
             ]
-        ]);
+        );
     }
-    
+
     /**
      * @param string $timeZone
      */
@@ -187,7 +190,7 @@ class ReportPortalHTTPService
     {
         self::$host = $host;
     }
-    
+
     /**
      * @param bool $isHTTPErrorsAllowed
      */
@@ -201,11 +204,11 @@ class ReportPortalHTTPService
      *
      * @return boolean - true if any suite has running status
      */
-    public static function isSuiteRunned()
+    public static function isSuiteRunned(): bool
     {
-        return self::$rootItemID != self::EMPTY_ID;
+        return self::$rootItemID !== self::EMPTY_ID;
     }
-    
+
     /**
      * @return string
      */
@@ -229,17 +232,18 @@ class ReportPortalHTTPService
     {
         self::$stepItemID = self::EMPTY_ID;
     }
-    
+
     /**
      * @param string $UUID
      * @param string $baseURI
      * @param string $host
      * @param string $timeZone
      * @param string $projectName
-     * @param bool $isHTTPErrorsAllowed
+     * @param bool   $isHTTPErrorsAllowed
      */
-    public static function configureClient(string $UUID, string $baseURI, string $host, string $timeZone, string $projectName, bool $isHTTPErrorsAllowed)
-    {
+    public static function configureClient(
+        string $UUID, string $baseURI, string $host, string $timeZone, string $projectName, bool $isHTTPErrorsAllowed
+    ) {
         self::$UUID = $UUID;
         self::$baseURI = $baseURI;
         self::$host = $host;
@@ -247,15 +251,15 @@ class ReportPortalHTTPService
         self::$projectName = $projectName;
         self::$isHTTPErrorsAllowed = $isHTTPErrorsAllowed;
     }
-    
+
     /**
      * Check if any step has running status
      *
      * @return boolean - true if any step has running status
      */
-    public static function isStepRunned()
+    public static function isStepRunned(): bool
     {
-        return self::$stepItemID != self::EMPTY_ID;
+        return self::$stepItemID !== self::EMPTY_ID;
     }
 
     /**
@@ -263,9 +267,9 @@ class ReportPortalHTTPService
      *
      * @return boolean - true if any scenario has running status
      */
-    public static function isScenarioRunned()
+    public static function isScenarioRunned(): bool
     {
-        return self::$scenarioItemID != self::EMPTY_ID;
+        return self::$scenarioItemID !== self::EMPTY_ID;
     }
 
     /**
@@ -273,9 +277,9 @@ class ReportPortalHTTPService
      *
      * @return boolean - true if any feature has running status
      */
-    public static function isFeatureRunned()
+    public static function isFeatureRunned(): bool
     {
-        return self::$featureItemID != self::EMPTY_ID;
+        return self::$featureItemID !== self::EMPTY_ID;
     }
 
     /**
@@ -284,7 +288,7 @@ class ReportPortalHTTPService
      * @param string $yamlFilePath
      *            - path to configuration file
      */
-    public static function configureReportPortalHTTPService(string $yamlFilePath)
+    public static function configureReportPortalHTTPService(string $yamlFilePath): void
     {
         $yamlArray = Yaml::parse($yamlFilePath);
         self::$UUID = $yamlArray['UUID'];
@@ -303,25 +307,30 @@ class ReportPortalHTTPService
      *            - description of test run
      * @param string $mode
      *            - mode
-     * @param array $tags
+     * @param array  $tags
      *            - array with tags of test run
+     *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
-    public static function launchTestRun(string $name, string $description, string $mode, array $tags)
-    {
-        $result = self::$client->post('v1/' . self::$projectName . '/launch', array(
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'json' => array(
-                'description' => $description,
-                'mode' => $mode,
-                'name' => $name,
-                'start_time' => self::getTime(),
-                'tags' => $tags
-            )
-        ));
+    public static function launchTestRun(string $name, string $description, string $mode, array $tags
+    ): ResponseInterface {
+        $result = self::$client->post(
+            'v1/' . self::$projectName . '/launch', [
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+                'json'    => [
+                    'description' => $description,
+                    'mode'        => $mode,
+                    'name'        => $name,
+                    'start_time'  => self::getTime(),
+                    'tags'        => $tags
+                ]
+            ]
+        );
         self::$launchID = self::getValueFromResponse('id', $result);
+
         return $result;
     }
 
@@ -330,43 +339,49 @@ class ReportPortalHTTPService
      *
      * @param string $runStatus
      *            - status of test run
+     *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
-    public static function finishTestRun(string $runStatus)
+    public static function finishTestRun(string $runStatus): ResponseInterface
     {
-        $result = self::$client->put('v1/' . self::$projectName . '/launch/' . self::$launchID . '/finish', array(
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'json' => array(
-                'end_time' => self::getTime(),
-                'status' => $runStatus
-            )
-        ));
-        return $result;
+        return self::$client->put(
+            'v1/' . self::$projectName . '/launch/' . self::$launchID . '/finish', [
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+                'json'    => [
+                    'end_time' => self::getTime(),
+                    'status'   => $runStatus
+                ]
+            ]
+        );
     }
-    
+
     /**
      * Force finish test run
      *
      * @param string $runStatus
      *            - status of test run
+     *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
-    public static function forceFinishTestRun( string $runStatus)
+    public static function forceFinishTestRun(string $runStatus): ResponseInterface
     {
-        $result = self::$client->put('v1/' . self::$projectName . '/launch/' . self::$launchID . '/stop', array(
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'json' => array(
-                'end_time' => self::getTime(),
-                'status' => $runStatus
-            )
-        ));
-        return $result;
+        return self::$client->put(
+            'v1/' . self::$projectName . '/launch/' . self::$launchID . '/stop', [
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+                'json'    => [
+                    'end_time' => self::getTime(),
+                    'status'   => $runStatus
+                ]
+            ]
+        );
     }
-    
+
     /**
      * Create root item
      *
@@ -374,26 +389,31 @@ class ReportPortalHTTPService
      *            - root item name
      * @param string $description
      *            - root item description
-     * @param array $tags
+     * @param array  $tags
      *            - array with tags
+     *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
-    public static function createRootItem(string $name, string $description, array $tags)
+    public static function createRootItem(string $name, string $description, array $tags): ResponseInterface
     {
-        $result = self::$client->post('v1/' . self::$projectName . '/item', array(
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'json' => array(
-                'description' => $description,
-                'launch_id' => self::$launchID,
-                'name' => $name,
-                'start_time' => self::getTime(),
-                "tags" => $tags,
-                "type" => "SUITE"
-            )
-        ));
+        $result = self::$client->post(
+            'v1/' . self::$projectName . '/item', [
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+                'json'    => [
+                    'description' => $description,
+                    'launch_id'   => self::$launchID,
+                    'name'        => $name,
+                    'start_time'  => self::getTime(),
+                    "tags"        => $tags,
+                    "type"        => "SUITE"
+                ]
+            ]
+        );
         self::$rootItemID = self::getValueFromResponse('id', $result);
+
         return $result;
     }
 
@@ -402,10 +422,11 @@ class ReportPortalHTTPService
      *
      * @return ResponseInterface - result of request
      */
-    public static function finishRootItem()
+    public static function finishRootItem(): ResponseInterface
     {
         $result = self::finishItem(self::$rootItemID, ItemStatusesEnum::PASSED, '');
         self::$rootItemID = self::EMPTY_ID;
+
         return $result;
     }
 
@@ -418,69 +439,82 @@ class ReportPortalHTTPService
      *            - log message
      * @param string $logLevel
      *            - log level of log message
+     *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
-    public static function addLogMessage(string $item_id, string $message, string $logLevel)
+    public static function addLogMessage(string $item_id, string $message, string $logLevel): ResponseInterface
     {
-        $result = self::$client->post('v1/' . self::$projectName . '/log', array(
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'json' => array(
-                'item_id' => $item_id,
-                'message' => $message,
-                'time' => self::getTime(),
-                'level' => $logLevel
-            )
-        ));
-        return $result;
+        return self::$client->post(
+            'v1/' . self::$projectName . '/log', [
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+                'json'    => [
+                    'item_id' => $item_id,
+                    'message' => $message,
+                    'time'    => self::getTime(),
+                    'level'   => $logLevel
+                ]
+            ]
+        );
     }
 
     /**
      * Add log with picture.
      *
-     * @param string $item_id - current step item_id
-     * @param string $message - message for log
-     * @param string $logLevel - log level
-     * @param string $pictureAsString - picture as string
+     * @param string $item_id            - current step item_id
+     * @param string $message            - message for log
+     * @param string $logLevel           - log level
+     * @param string $pictureAsString    - picture as string
      * @param string $pictureContentType - picture content type (png, jpeg, etc.)
      *
      * @return ResponseInterface - response
+     * @throws GuzzleException
      */
-    public static function addLogMessageWithPicture(string $item_id, string $message, string $logLevel, string $pictureAsString, string $pictureContentType)
-    {
+    public static function addLogMessageWithPicture(
+        string $item_id, string $message, string $logLevel, string $pictureAsString, string $pictureContentType
+    ): ResponseInterface {
         if (self::isStepRunned()) {
-            $multipart = new MultipartStream([
+            $multipart = new MultipartStream(
                 [
-                    'name' => 'json_request_part',
-                    'contents' => json_encode([['file' => ['name' => 'picture'],
-                        'item_id' => $item_id,
-                        'message' => $message,
-                        'time' => self::getTime(),
-                        'level' => $logLevel]]),
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Content-Transfer-Encoding' => '8bit'
-                    ]
-                ],
-                [
-                    'name' => 'binary_part',
-                    'contents' => $pictureAsString,
-                    'filename' => 'picture',
-                    'headers' => [
-                        'Content-Type' => 'image/' . $pictureContentType,
-                        'Content-Transfer-Encoding' => 'binary'
+                    [
+                        'name'     => 'json_request_part',
+                        'contents' => json_encode(
+                            [
+                                [
+                                    'file'    => ['name' => 'picture'],
+                                    'item_id' => $item_id,
+                                    'message' => $message,
+                                    'time'    => self::getTime(),
+                                    'level'   => $logLevel
+                                ]
+                            ]
+                        ),
+                        'headers'  => [
+                            'Content-Type'              => 'application/json',
+                            'Content-Transfer-Encoding' => '8bit'
+                        ]
+                    ],
+                    [
+                        'name'     => 'binary_part',
+                        'contents' => $pictureAsString,
+                        'filename' => 'picture',
+                        'headers'  => [
+                            'Content-Type'              => 'image/' . $pictureContentType,
+                            'Content-Transfer-Encoding' => 'binary'
+                        ]
                     ]
                 ]
-            ]);
+            );
             $request = new Request(
                 'POST',
                 'v1/' . self::$projectName . '/log',
                 [],
                 $multipart
             );
-            $result = self::$client->send($request);
-            return $result;
+
+            return self::$client->send($request);
         }
     }
 
@@ -493,35 +527,40 @@ class ReportPortalHTTPService
      *            - status of test item
      * @param string $description
      *            - description of test item
+     *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
-    public static function finishItem(string $itemID, string $status, string $description)
+    public static function finishItem(string $itemID, string $status, string $description): ResponseInterface
     {
-        $result = self::$client->put('v1/' . self::$projectName . '/item/' . $itemID, array(
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'json' => array(
-                'description' => $description,
-                'end_time' => self::getTime(),
-                'status' => $status
-            )
-        ));
-        return $result;
+        return self::$client->put(
+            'v1/' . self::$projectName . '/item/' . $itemID, [
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+                'json'    => [
+                    'description' => $description,
+                    'end_time'    => self::getTime(),
+                    'status'      => $status
+                ]
+            ]
+        );
     }
 
     /**
      * Get value from response.
      *
-     * @param string $lookForRequest
+     * @param string            $lookForRequest
      *            - string to find value
      * @param ResponseInterface $response
-     * @return string value by $lookForRequest.
+     *
+     * @return string|null value by $lookForRequest.
      */
-    public static function getValueFromResponse(string $lookForRequest, ResponseInterface $response)
+    public static function getValueFromResponse(string $lookForRequest, ResponseInterface $response): ?string
     {
-        $array = json_decode($response->getBody()->getContents());
-        return $array->{$lookForRequest};
+        $array = json_decode($response->getBody()->getContents(), true);
+
+        return $array[$lookForRequest] ?? null;
     }
 
     /**
@@ -535,26 +574,30 @@ class ReportPortalHTTPService
      *            - item name
      * @param string $type
      *            - item type
-     * @param array $tags
+     * @param array  $tags
      *            - array with tags
+     *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
-    public static function startChildItem(string $parentItemID, string $description, string $name, string $type, array $tags)
-    {
-        $result = self::$client->post('v1/' . self::$projectName . '/item/' . $parentItemID, array(
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'json' => array(
-                'description' => $description,
-                'launch_id' => self::$launchID,
-                'name' => $name,
-                'start_time' => self::getTime(),
-                'tags' => $tags,
-                'type' => $type
-            )
-        ));
-        return $result;
+    public static function startChildItem(
+        string $parentItemID, string $description, string $name, string $type, array $tags
+    ): ResponseInterface {
+        return self::$client->post(
+            'v1/' . self::$projectName . '/item/' . $parentItemID, [
+                'headers' => [
+                    'Content-Type' => 'application/json'
+                ],
+                'json'    => [
+                    'description' => $description,
+                    'launch_id'   => self::$launchID,
+                    'name'        => $name,
+                    'start_time'  => self::getTime(),
+                    'tags'        => $tags,
+                    'type'        => $type
+                ]
+            ]
+        );
     }
 
     /**
@@ -562,7 +605,7 @@ class ReportPortalHTTPService
      *
      * @return string with local time
      */
-    protected static function getTime()
+    protected static function getTime(): string
     {
         return date(self::FORMAT_DATE) . self::$timeZone;
     }
@@ -574,14 +617,15 @@ class ReportPortalHTTPService
      *            - response of request with result
      *
      * @return true if there is no errors
+     * @throws GuzzleException
      */
-    public static function finishAll($result)
+    public static function finishAll($result): bool
     {
         $status = true;
         $body = $result->getBody();
-        $array = json_decode($body->getContents());
+        $array = json_decode($body->getContents(), true);
         if ((strpos($body, self::ERROR_FINISH_LAUNCH) > -1) or (strpos($body, self::ERROR_FINISH_TEST_ITEM) > -1)) {
-            $message = $array->{'message'};
+            $message = $array['message'];
             if (count($message) > 1) {
                 $items = mb_split(',', explode(']', explode('[', $message)[1])[0]);
                 foreach ($items as $itemID) {
@@ -591,6 +635,7 @@ class ReportPortalHTTPService
             }
             self::forceFinishTestRun(ItemStatusesEnum::CANCELLED);
         }
+
         return $status;
     }
 }

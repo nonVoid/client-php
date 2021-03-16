@@ -1,29 +1,33 @@
 {
-	"name" : "reportportal/base",
-	"type" : "library",
-	"description" : "Basic classes for Report Portal collaboration",
-	"keywords" : [
-		"Report",
-		"Reporting",
-		"Report Portal"
-	],
-	"homepage" : "https://github.com/Mikalai-Kabzar/client-php",
-	"license" : "MIT",
-	"authors" : [{
-			"name" : "Kabzar Mikalai",
-			"email" : "loki.engine@mail.ru",
-			"role" : "Developer"
-		}
-	],
-	"minimum-stability": "stable",
-	"require" : {
-		"guzzlehttp/guzzle" : "*",
-		"psr/http-message" : "*",
-		"symfony/yaml" : "*"
-	},
-	"autoload" : {
-		"classmap" : [
-			"src/"
-		]
-			}
+  "name": "reportportal/base",
+  "type": "library",
+  "description": "Basic classes for Report Portal collaboration",
+  "keywords": [
+    "Report",
+    "Reporting",
+    "Report Portal"
+  ],
+  "homepage": "https://github.com/nonVoid/client-php",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Felix Weber",
+      "email": "github@nonvoid.de",
+      "role": "Developer"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": "^7.1",
+    "guzzlehttp/guzzle": "*",
+    "psr/http-message": "*",
+    "symfony/yaml": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*"
+  },
+  "autoload": {
+    "classmap": [
+      "src/"
+    ]
+  }
 }
