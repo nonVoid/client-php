@@ -421,6 +421,7 @@ class ReportPortalHTTPService
      * Finish root item
      *
      * @return ResponseInterface - result of request
+     * @throws GuzzleException
      */
     public static function finishRootItem(): ResponseInterface
     {
@@ -469,12 +470,12 @@ class ReportPortalHTTPService
      * @param string $pictureAsString    - picture as string
      * @param string $pictureContentType - picture content type (png, jpeg, etc.)
      *
-     * @return ResponseInterface - response
+     * @return ResponseInterface|null - response
      * @throws GuzzleException
      */
     public static function addLogMessageWithPicture(
         string $item_id, string $message, string $logLevel, string $pictureAsString, string $pictureContentType
-    ): ResponseInterface {
+    ): ?ResponseInterface {
         if (self::isStepRunned()) {
             $multipart = new MultipartStream(
                 [
@@ -516,6 +517,7 @@ class ReportPortalHTTPService
 
             return self::$client->send($request);
         }
+        return null;
     }
 
     /**
