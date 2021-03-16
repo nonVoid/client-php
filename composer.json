@@ -1,5 +1,6 @@
 {
   "name": "nonvoid/reportportal-base",
+  "version": "v1.0.2",
   "type": "library",
   "description": "Basic classes for Report Portal collaboration",
   "keywords": [
