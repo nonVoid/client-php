@@ -16,7 +16,11 @@ class ItemStatusesEnum
 
     const SKIPPED = 'SKIPPED';
 
-    const RESETED = 'RESETED';
-
     const CANCELLED = 'CANCELLED';
+
+    const INTERRUPTED = 'INTERRUPTED';
+
+    const INFO = 'INFO';
+
+    const WARN = 'WARN';
 }
