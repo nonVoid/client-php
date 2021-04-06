@@ -592,11 +592,12 @@ class ReportPortalHTTPService
                 ],
                 'json'    => [
                     'description' => $description,
-                    'launch_id'   => self::$launchID,
+                    'launchUuid'   => self::$launchID,
                     'name'        => $name,
-                    'start_time'  => self::getTime(),
+                    'startTime'   => self::getTime(),
                     'tags'        => $tags,
-                    'type'        => $type
+                    'type'        => $type,
+                    'hasStats'    => $type !== ItemTypesEnum::STEP,
                 ]
             ]
         );
