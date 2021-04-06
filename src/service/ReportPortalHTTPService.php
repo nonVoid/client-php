@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
+use ReportPortalBasic\Enum\ItemTypesEnum;
 use ReportPortalBasic\Enum\ItemStatusesEnum;
 use Symfony\Component\Yaml\Yaml;
 
