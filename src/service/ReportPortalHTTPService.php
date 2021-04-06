@@ -7,8 +7,8 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
-use ReportPortalBasic\Enum\ItemTypesEnum;
 use ReportPortalBasic\Enum\ItemStatusesEnum;
+use ReportPortalBasic\Enum\ItemTypesEnum;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -518,6 +518,7 @@ class ReportPortalHTTPService
 
             return self::$client->send($request);
         }
+
         return null;
     }
 
@@ -530,22 +531,29 @@ class ReportPortalHTTPService
      *            - status of test item
      * @param string $description
      *            - description of test item
+     * @param array  $issue
+     *            - issue of step item
      *
      * @return ResponseInterface - result of request
      * @throws GuzzleException
      */
-    public static function finishItem(string $itemID, string $status, string $description): ResponseInterface
-    {
+    public static function finishItem(string $itemID, string $status, string $description, array $issue = null):
+    ResponseInterface {
+        $data = [
+            'description' => $description,
+            'end_time'    => self::getTime(),
+            'status'      => $status
+        ];
+        if ($issue !== null) {
+            $data['issue'] = $issue;
+        }
+
         return self::$client->put(
             'v1/' . self::$projectName . '/item/' . $itemID, [
                 'headers' => [
                     'Content-Type' => 'application/json'
                 ],
-                'json'    => [
-                    'description' => $description,
-                    'end_time'    => self::getTime(),
-                    'status'      => $status
-                ]
+                'json'    => $data,
             ]
         );
     }
@@ -569,22 +577,24 @@ class ReportPortalHTTPService
     /**
      * Start child item.
      *
-     * @param string $parentItemID
+     * @param string  $parentItemID
      *            - id of parent item.
-     * @param string $description
+     * @param string  $description
      *            - item description
-     * @param string $name
+     * @param string  $name
      *            - item name
-     * @param string $type
+     * @param string  $type
      *            - item type
-     * @param array  $tags
+     * @param array   $tags
+     *            - array with tags
+     * @param boolean $hasStats
      *            - array with tags
      *
      * @return ResponseInterface - result of request
      * @throws GuzzleException
      */
     public static function startChildItem(
-        string $parentItemID, string $description, string $name, string $type, array $tags
+        string $parentItemID, string $description, string $name, string $type, array $tags, $hasStats = true
     ): ResponseInterface {
         return self::$client->post(
             'v1/' . self::$projectName . '/item/' . $parentItemID, [
@@ -593,12 +603,12 @@ class ReportPortalHTTPService
                 ],
                 'json'    => [
                     'description' => $description,
-                    'launchUuid'   => self::$launchID,
+                    'launchUuid'  => self::$launchID,
                     'name'        => $name,
                     'startTime'   => self::getTime(),
                     'tags'        => $tags,
                     'type'        => $type,
-                    'hasStats'    => $type !== ItemTypesEnum::STEP,
+                    'hasStats'    => $hasStats,
                 ]
             ]
         );
