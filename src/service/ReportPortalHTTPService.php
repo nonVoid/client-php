@@ -8,7 +8,6 @@ use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
 use ReportPortalBasic\Enum\ItemStatusesEnum;
-use ReportPortalBasic\Enum\ItemTypesEnum;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -651,5 +650,17 @@ class ReportPortalHTTPService
         }
 
         return $status;
+    }
+
+    public static function getCurrentLaunchStatusResponse(): ResponseInterface
+    {
+        return self::$client->get(
+            'v1/' . self::$projectName . '/launch/' . self::$launchID);
+    }
+
+    public static function getCurrentLaunchStatus(): array
+    {
+        $result = self::getCurrentLaunchStatusResponse();
+        return json_decode($result->getBody()->getContents(), true);
     }
 }
