@@ -24,7 +24,8 @@
     "psr/http-message": "*",
     "symfony/yaml": "*",
     "ext-json": "*",
-    "ext-mbstring": "*"
+    "ext-mbstring": "*",
+    "ext-fileinfo": "*"
   },
   "autoload": {
     "classmap": [

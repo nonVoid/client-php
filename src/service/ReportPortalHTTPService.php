@@ -522,6 +522,68 @@ class ReportPortalHTTPService
     }
 
     /**
+     * Add log with picture.
+     *
+     * @param string $item_id  - current step item_id
+     * @param string $message  - message for log
+     * @param string $logLevel - log level
+     * @param string $filePath
+     *
+     * @return ResponseInterface|null - response
+     * @throws GuzzleException
+     */
+    public static function addLogMessageWithFile(
+        string $item_id, string $message, string $logLevel, string $filePath
+    ): ?ResponseInterface {
+        if (file_exists($filePath) === false) {
+            return null;
+        }
+        $fileContent = file_get_contents($filePath);
+        $fileName = basename($filePath);
+        $contentType = mime_content_type($filePath);
+
+        $multipart = new MultipartStream(
+            [
+                [
+                    'name'     => 'json_request_part',
+                    'contents' => json_encode(
+                        [
+                            [
+                                'file'    => ['name' => $fileName],
+                                'item_id' => $item_id,
+                                'message' => $message,
+                                'time'    => self::getTime(),
+                                'level'   => $logLevel
+                            ]
+                        ]
+                    ),
+                    'headers'  => [
+                        'Content-Type'              => 'application/json',
+                        'Content-Transfer-Encoding' => '8bit'
+                    ]
+                ],
+                [
+                    'name'     => 'binary_part',
+                    'contents' => $fileContent,
+                    'filename' => $fileName,
+                    'headers'  => [
+                        'Content-Type'              => $contentType,
+                        'Content-Transfer-Encoding' => 'binary'
+                    ]
+                ]
+            ]
+        );
+        $request = new Request(
+            'POST',
+            'v1/' . self::$projectName . '/log',
+            [],
+            $multipart
+        );
+
+        return self::$client->send($request);
+    }
+
+    /**
      * Finish item by id
      *
      * @param string $itemID
@@ -655,12 +717,37 @@ class ReportPortalHTTPService
     public static function getCurrentLaunchStatusResponse(): ResponseInterface
     {
         return self::$client->get(
-            'v1/' . self::$projectName . '/launch/' . self::$launchID);
+            'v1/' . self::$projectName . '/launch/' . self::$launchID
+        );
     }
 
     public static function getCurrentLaunchStatus(): array
     {
         $result = self::getCurrentLaunchStatusResponse();
+
         return json_decode($result->getBody()->getContents(), true);
+    }
+
+    public static function getFilteredItems(array $filter = []): ResponseInterface
+    {
+        return self::$client->get(
+            'v1/' . self::$projectName . '/item', ['query' => $filter]
+        );
+    }
+
+    public static function getFilteredItemsContent(array $filter = [])
+    {
+        $result = self::getFilteredItems($filter);
+        $data = json_decode($result->getBody()->getContents(), true);
+
+        return $data['content'] ?? null;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getRootItemID(): string
+    {
+        return self::$rootItemID;
     }
 }
